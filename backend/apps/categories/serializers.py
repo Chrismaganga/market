@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, CategoryAttribute
+from .models import Category, CategoryAttribute # type: ignore
 
 
 class CategoryAttributeSerializer(serializers.ModelSerializer):
