@@ -1,8 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
-from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.db import models as gis_models
+# from django.contrib.gis.geos import Point
 
 
 class User(AbstractUser):
@@ -16,7 +16,7 @@ class User(AbstractUser):
     phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True)
     
     # Location fields
-    location = gis_models.PointField(null=True, blank=True)
+    # location = gis_models.PointField(null=True, blank=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=100, blank=True)
@@ -50,8 +50,9 @@ class User(AbstractUser):
     
     def set_location(self, latitude, longitude):
         """Set user location from coordinates."""
-        if latitude and longitude:
-            self.location = Point(longitude, latitude)
+        # if latitude and longitude:
+        #     self.location = Point(longitude, latitude)
+        pass
     
     def get_full_address(self):
         """Get formatted full address."""

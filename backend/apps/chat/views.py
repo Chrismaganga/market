@@ -41,6 +41,8 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
     
     serializer_class = ChatRoomSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id"
+    lookup_url_kwarg = "chat_room_id"
     
     def get_queryset(self):
         return ChatRoom.objects.filter(
@@ -54,15 +56,12 @@ class MessageListView(generics.ListAPIView):
     
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "chat_room_id"
+    lookup_url_kwarg = "chat_room_id"
     
     def get_queryset(self):
         chat_room_id = self.kwargs.get('chat_room_id')
-        chat_room = get_object_or_404(
-            ChatRoom,
-            id=chat_room_id,
-            participants=self.request.user
-        )
-        return Message.objects.filter(chat_room=chat_room).select_related('sender')
+        return Message.objects.filter(chat_room_id=chat_room_id)
 
 
 class MessageCreateView(generics.CreateAPIView):

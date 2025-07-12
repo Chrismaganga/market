@@ -71,6 +71,10 @@ class PaymentMethodDeleteView(generics.DestroyAPIView):
     
     permission_classes = [permissions.IsAuthenticated]
     queryset = PaymentMethod.objects.all()
+    serializer_class = PaymentMethodSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id"
+    lookup_url_kwarg = "payment_method_id"
     
     def get_queryset(self):
         return PaymentMethod.objects.filter(user=self.request.user)
@@ -94,6 +98,11 @@ class PaymentDetailView(generics.RetrieveAPIView):
     
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id"
+    lookup_url_kwarg = "payment_id"
     
     def get_queryset(self):
         user = self.request.user

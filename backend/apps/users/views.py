@@ -159,6 +159,8 @@ class AdminUserVerificationUpdateView(generics.UpdateAPIView):
     serializer_class = AdminUserVerificationSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = UserVerification.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "verification_id"
     
     def perform_update(self, serializer):
         verification = serializer.save(

@@ -1,10 +1,12 @@
 from django.db import models
-from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.db import models as gis_models
+# from django.contrib.gis.geos import Point
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from apps.users.models import User
 from apps.categories.models import Category
+import os
+os.environ['GDAL_LIBRARY_PATH'] = '/usr/lib/libgdal.so'  # Use the actual path found above
 
 
 class Listing(models.Model):
@@ -38,7 +40,7 @@ class Listing(models.Model):
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='good')
     
     # Location
-    location = gis_models.PointField(null=True, blank=True)
+    # location = gis_models.PointField(null=True, blank=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=100, blank=True)
@@ -92,8 +94,9 @@ class Listing(models.Model):
     
     def set_location(self, latitude, longitude):
         """Set listing location from coordinates."""
-        if latitude and longitude:
-            self.location = Point(longitude, latitude)
+        # if latitude and longitude:
+        #     self.location = Point(longitude, latitude)
+        pass
     
     def get_full_address(self):
         """Get formatted full address."""
@@ -113,8 +116,8 @@ class Listing(models.Model):
     
     def get_distance_from_point(self, point):
         """Get distance from a given point in kilometers."""
-        if self.location and point:
-            return self.location.distance(point) * 100  # Convert to km
+        # if self.location and point:
+        #     return self.location.distance(point) * 100  # Convert to km
         return None
 
 

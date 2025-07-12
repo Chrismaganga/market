@@ -20,5 +20,5 @@ urlpatterns = [
     
     # Admin verification management
     path('admin/verification/list/', views.AdminUserVerificationListView.as_view(), name='admin-verification-list'),
-    path('admin/verification/<int:pk>/update/', views.AdminUserVerificationUpdateView.as_view(), name='admin-verification-update'),
+    path('admin/verification/<int:verification_id>/update/', views.AdminUserVerificationUpdateView.as_view(), name='admin-verification-update'),
 ] 

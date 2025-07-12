@@ -62,6 +62,8 @@ class ListingDetailView(generics.RetrieveAPIView):
     serializer_class = ListingDetailSerializer
     permission_classes = [permissions.AllowAny]
     queryset = Listing.objects.select_related('seller', 'category').prefetch_related('images')
+    lookup_field = "id"
+    lookup_url_kwarg = "listing_id"
     
     def retrieve(self, request, *args, **kwargs):
         listing = self.get_object()
@@ -104,6 +106,8 @@ class ListingUpdateView(generics.UpdateAPIView):
     serializer_class = ListingUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Listing.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "listing_id"
     
     def get_queryset(self):
         return Listing.objects.filter(seller=self.request.user)
@@ -114,6 +118,8 @@ class ListingDeleteView(generics.DestroyAPIView):
     
     permission_classes = [permissions.IsAuthenticated]
     queryset = Listing.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "listing_id"
     
     def get_queryset(self):
         return Listing.objects.filter(seller=self.request.user)
@@ -290,9 +296,15 @@ class ListingImageDeleteView(generics.DestroyAPIView):
     
     permission_classes = [permissions.IsAuthenticated]
     queryset = ListingImage.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "image_id"
     
     def get_queryset(self):
-        return ListingImage.objects.filter(listing__seller=self.request.user)
+        image_id = self.kwargs.get('image_id')
+        return ListingImage.objects.filter(
+            id=image_id,
+            listing__seller=self.request.user
+        )
 
 
 @api_view(['POST'])
@@ -325,4 +337,133 @@ def toggle_favorite(request, listing_id):
         return Response(
             {'error': 'Listing not found'},
             status=status.HTTP_404_NOT_FOUND
-        ) 
+        )
+
+
+# Additional listing views
+class TrendingListingsView(generics.ListAPIView):
+    """View for trending listings."""
+    
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        days = int(self.request.query_params.get('days', 7))
+        limit = int(self.request.query_params.get('limit', 10))
+        return get_trending_listings(days=days, limit=limit)
+
+
+class FeaturedListingsView(generics.ListAPIView):
+    """View for featured listings."""
+    
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        limit = int(self.request.query_params.get('limit', 10))
+        return get_featured_listings(limit=limit)
+
+
+class NearbyListingsView(generics.ListAPIView):
+    """View for nearby listings."""
+    
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        latitude = float(self.request.query_params.get('latitude'))
+        longitude = float(self.request.query_params.get('longitude'))
+        radius = float(self.request.query_params.get('radius', 50))
+        limit = int(self.request.query_params.get('limit', 20))
+        
+        return get_nearby_listings(
+            latitude=latitude,
+            longitude=longitude,
+            radius=radius,
+            limit=limit
+        )
+
+
+class SimilarListingsView(generics.ListAPIView):
+    """View for similar listings."""
+    
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        listing_id = self.kwargs.get('listing_id')
+        listing = get_object_or_404(Listing, id=listing_id)
+        limit = int(self.request.query_params.get('limit', 5))
+        
+        return get_similar_listings(listing=listing, limit=limit)
+
+
+class SellerListingsView(generics.ListAPIView):
+    """View for seller's other listings."""
+    
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        seller_id = self.kwargs.get('seller_id')
+        exclude_listing_id = self.request.query_params.get('exclude_listing')
+        limit = int(self.request.query_params.get('limit', 10))
+        
+        from apps.users.models import User
+        seller = get_object_or_404(User, id=seller_id)
+        exclude_listing = None
+        
+        if exclude_listing_id:
+            exclude_listing = get_object_or_404(Listing, id=exclude_listing_id)
+        
+        return get_seller_listings(
+            seller=seller,
+            exclude_listing=exclude_listing,
+            limit=limit
+        )
+
+
+class ListingRecommendationsView(generics.ListAPIView):
+    """View for personalized listing recommendations."""
+    
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        limit = int(self.request.query_params.get('limit', 10))
+        return get_listing_recommendations(user=self.request.user, limit=limit)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def listing_stats(request, listing_id):
+    """Get statistics for a listing."""
+    listing = get_object_or_404(Listing, id=listing_id)
+    
+    # Check if user is the seller
+    if listing.seller != request.user:
+        return Response(
+            {'error': 'Access denied'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    stats = calculate_listing_stats(listing)
+    return Response(stats)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def listing_analytics(request, listing_id):
+    """Get analytics for a listing."""
+    listing = get_object_or_404(Listing, id=listing_id)
+    
+    # Check if user is the seller
+    if listing.seller != request.user:
+        return Response(
+            {'error': 'Access denied'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    days = int(request.query_params.get('days', 30))
+    analytics = get_listing_analytics(listing=listing, days=days)
+    return Response(analytics) 
